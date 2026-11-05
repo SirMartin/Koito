@@ -54,6 +54,10 @@ services:
     restart: unless-stopped
 ```
 
+## Fork additions
+
+- [Awards](docs/awards/README.md): yearly medals, weeks at #1 and listen-count certifications on artist, album and track pages.
+
 ## Importing Data
 
 See the [data importing guide](https://koito.io/guides/importing/) in the docs.
