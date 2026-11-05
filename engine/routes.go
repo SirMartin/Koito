@@ -11,6 +11,7 @@ import (
 
 	"github.com/gabehf/koito/engine/handlers"
 	"github.com/gabehf/koito/engine/middleware"
+	"github.com/gabehf/koito/internal/awards"
 	"github.com/gabehf/koito/internal/cfg"
 	"github.com/gabehf/koito/internal/db"
 	mbz "github.com/gabehf/koito/internal/mbz"
@@ -59,6 +60,7 @@ func bindRoutes(
 			r.Get("/top/tracks", handlers.GetTopTracksHandler(db))
 			r.Get("/top/albums", handlers.GetTopAlbumsHandler(db))
 			r.Get("/top/artists", handlers.GetTopArtistsHandler(db))
+			r.Get("/awards/{type}/{id}", awards.Handler(db))
 
 			r.Get("/listens", handlers.GetListensHandler(db))
 			r.Get("/listen-activity", handlers.GetListenActivityHandler(db))

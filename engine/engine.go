@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gabehf/koito/engine/middleware"
+	"github.com/gabehf/koito/internal/awards"
 	"github.com/gabehf/koito/internal/catalog"
 	"github.com/gabehf/koito/internal/cfg"
 	"github.com/gabehf/koito/internal/db"
@@ -253,6 +254,7 @@ func Run(
 	go catalog.FetchMissingArtistImages(ctx, store)
 	l.Info().Msg("Engine: Attempting to fetch missing album images")
 	go catalog.FetchMissingAlbumImages(ctx, store)
+	go awards.Start(ctx, store)
 
 	l.Info().Msg("Engine: Initialization finished")
 	quit := make(chan os.Signal, 1)
