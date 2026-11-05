@@ -31,6 +31,9 @@ func (s *Syncer) Sync(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if err := s.checkTimezone(ctx); err != nil {
+		return err
+	}
 	maxDirty, err := s.invalidate(ctx)
 	if err != nil {
 		return err
@@ -167,6 +170,38 @@ func (s *Syncer) computeOne(ctx context.Context, p Period) error {
 	}
 	if _, err := tx.ExecContext(ctx,
 		`INSERT OR REPLACE INTO awards_done (period_type, period) VALUES (?,?)`, string(p.Type), p.Key); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// checkTimezone schedules a full rebuild when the configured timezone differs
+// from the one the stored periods were bucketed with.
+func (s *Syncer) checkTimezone(ctx context.Context) error {
+	tz := s.cfg.Location.String()
+	var stored string
+	err := s.sqlDB.QueryRowContext(ctx, `SELECT value FROM awards_meta WHERE key = 'tz'`).Scan(&stored)
+	if err == nil && stored == tz {
+		return nil
+	}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("awards: read timezone: %w", err)
+	}
+	tx, err := s.sqlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var done int
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM awards_done`).Scan(&done); err != nil {
+		return err
+	}
+	if done > 0 {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO awards_dirty (ts) VALUES (-1)`); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT OR REPLACE INTO awards_meta (key, value) VALUES ('tz', ?)`, tz); err != nil {
 		return err
 	}
 	return tx.Commit()

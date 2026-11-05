@@ -201,3 +201,32 @@ func TestSyncConcurrentCallsDoNotDuplicate(t *testing.T) {
 		t.Fatalf("rows = %d, want %d", got, want)
 	}
 }
+
+func TestSyncRebuildsWhenTimezoneChanges(t *testing.T) {
+	s := newStore(t)
+	// 23:30 UTC on New Year's Eve is 2024 in Madrid but 2023 in UTC.
+	seed(t, s, plays("A", 1, time.Date(2023, 12, 31, 23, 30, 0, 0, time.UTC))...)
+
+	utcCfg, _ := LoadConfig(func(string) string { return "" })
+	mustSync(t, NewSyncer(s, s.SQL(), utcCfg, func() time.Time { return nowFixed }))
+	if got := storedRank(t, s, Year, "2023", Artist, "A"); got != 1 {
+		t.Fatalf("UTC: 2023 rank = %d, want 1", got)
+	}
+
+	madridCfg, err := LoadConfig(func(k string) string {
+		if k == "KOITO_AWARDS_TZ" {
+			return "Europe/Madrid"
+		}
+		return ""
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustSync(t, NewSyncer(s, s.SQL(), madridCfg, func() time.Time { return nowFixed }))
+	if got := storedRank(t, s, Year, "2023", Artist, "A"); got != 0 {
+		t.Errorf("Madrid: stale 2023 rank = %d, want none", got)
+	}
+	if got := storedRank(t, s, Year, "2024", Artist, "A"); got != 1 {
+		t.Errorf("Madrid: 2024 rank = %d, want 1", got)
+	}
+}

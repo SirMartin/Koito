@@ -29,3 +29,13 @@ Redeploy afterwards.
 ## If `go test ./internal/awards/` fails after an upgrade
 
 The first suspects are changed signatures or behaviour of `GetTop*Paginated`, `GetItemsOpts`, `SaveListen`, `SaveArtist`, `SaveAlbum` and `SaveTrack`, and the `*_with_name` / `*_with_title` views the tests use to look items up.
+
+## Forcing a rebuild
+
+Closed periods are stored once. If upstream changes how rankings count, the stored awards keep the old results until they are rebuilt. To force it, mark everything dirty; the next sync (at most 10 minutes later, or at restart) recomputes all periods:
+
+```sql
+INSERT INTO awards_dirty (ts) VALUES (-1);
+```
+
+Changing `KOITO_AWARDS_TZ` triggers this rebuild automatically.

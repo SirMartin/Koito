@@ -27,6 +27,8 @@ var schemaStatements = []string{
 		PRIMARY KEY (period_type, period)
 	)`,
 	`CREATE TABLE IF NOT EXISTS awards_dirty (ts INTEGER NOT NULL)`,
+	// Remembers the timezone the stored periods were bucketed with.
+	`CREATE TABLE IF NOT EXISTS awards_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
 
 	`CREATE TRIGGER IF NOT EXISTS awards_listens_ai AFTER INSERT ON listens
 	BEGIN INSERT INTO awards_dirty (ts) VALUES (NEW.listened_at); END`,
