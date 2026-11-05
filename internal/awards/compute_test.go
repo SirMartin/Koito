@@ -2,6 +2,7 @@ package awards
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -151,5 +152,26 @@ func TestComputeIgnoresListensOutsidePeriod(t *testing.T) {
 	}
 	if rankOf(t, s, as, Artist, "B") != 0 {
 		t.Fatal("B has no listens in 2024")
+	}
+}
+
+func TestComputeWeekKeepsAllTiedItemsBeyondOnePage(t *testing.T) {
+	s := newStore(t)
+	// 60 tracks listened once each: all tie at rank 1, more than one page of 50.
+	for i := 0; i < 60; i++ {
+		seed(t, s, plays(fmt.Sprintf("Art%02d", i), 1, t0)...)
+	}
+	as, err := ComputePeriod(context.Background(), s, PeriodOf(Week, t0.Unix(), time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	counts := map[ItemType]int{}
+	for _, a := range as {
+		counts[a.ItemType]++
+	}
+	for _, it := range []ItemType{Artist, Album, Track} {
+		if counts[it] != 60 {
+			t.Errorf("%s awards = %d, want 60", it, counts[it])
+		}
 	}
 }
