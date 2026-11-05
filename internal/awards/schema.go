@@ -37,6 +37,10 @@ var schemaStatements = []string{
 	`CREATE TRIGGER IF NOT EXISTS awards_listens_au AFTER UPDATE OF track_id ON listens
 	BEGIN INSERT INTO awards_dirty (ts) VALUES (NEW.listened_at); END`,
 
+	// Crediting another artist on a track that already has listens changes rankings.
+	`CREATE TRIGGER IF NOT EXISTS awards_artist_tracks_ai AFTER INSERT ON artist_tracks
+	WHEN EXISTS (SELECT 1 FROM listens WHERE track_id = NEW.track_id)
+	BEGIN INSERT INTO awards_dirty (ts) VALUES (-1); END`,
 	`CREATE TRIGGER IF NOT EXISTS awards_artist_tracks_au AFTER UPDATE ON artist_tracks
 	BEGIN INSERT INTO awards_dirty (ts) VALUES (-1); END`,
 	`CREATE TRIGGER IF NOT EXISTS awards_artist_tracks_ad AFTER DELETE ON artist_tracks

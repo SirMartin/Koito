@@ -170,3 +170,27 @@ func TestNewTrackWithoutListensDoesNotMarkDirty(t *testing.T) {
 		t.Fatalf("dirty = %v, want empty", got)
 	}
 }
+
+func TestAddArtistToTrackWithListensMarksEverythingDirty(t *testing.T) {
+	s := newStore(t)
+	seed(t, s,
+		ListenSpec{Artists: []string{"A"}, Album: "Al", Track: "T", At: t0},
+		ListenSpec{Artists: []string{"B"}, Album: "Bl", Track: "T2", At: t0.Add(time.Hour)},
+	)
+	clearDirty(t, s)
+	var trackID, artistID int32
+	if err := s.SQL().QueryRow(`SELECT track_id FROM listens WHERE listened_at = ?`, t0.Unix()).Scan(&trackID); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SQL().QueryRow(`SELECT id FROM artists_with_name WHERE name = 'B'`).Scan(&artistID); err != nil {
+		t.Fatal(err)
+	}
+	err := s.UpdateTrack(context.Background(), db.UpdateTrackOpts{ID: trackID, AddArtists: []int32{artistID}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := dirty(t, s)
+	if len(got) == 0 || got[0] != -1 {
+		t.Fatalf("dirty = %v, want a -1 row", got)
+	}
+}
