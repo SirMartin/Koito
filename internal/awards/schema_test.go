@@ -17,6 +17,10 @@ func newStore(t *testing.T) *sqlite.Sqlite {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// NewInMemory pins the pool to one connection, but upstream's top-N queries
+	// run a sub-query while their rows are still open and would deadlock on it.
+	// Production uses sqlite.New, which has no such limit.
+	s.SQL().SetMaxOpenConns(4)
 	if err := EnsureSchema(context.Background(), s.SQL()); err != nil {
 		t.Fatal(err)
 	}
