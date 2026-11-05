@@ -30,9 +30,13 @@ Redeploy afterwards.
 
 The first suspects are changed signatures or behaviour of `GetTop*Paginated`, `GetItemsOpts`, `SaveListen`, `SaveArtist`, `SaveAlbum` and `SaveTrack`, and the `*_with_name` / `*_with_title` views the tests use to look items up.
 
+## Upstream migrations that rebuild tables
+
+If a new upstream migration rebuilds `listens`, `tracks` or `artist_tracks` (`DROP` + `RENAME`, as `002_unique_mbid.sql` does for `tracks`), our triggers are lost on that table until the next start, when `EnsureSchema` recreates them. Changes made in between are not recorded, so force a rebuild after deploying such a version (see below).
+
 ## Forcing a rebuild
 
-Closed periods are stored once. If upstream changes how rankings count, the stored awards keep the old results until they are rebuilt. To force it, mark everything dirty; the next sync (at most 10 minutes later, or at restart) recomputes all periods:
+Closed periods are stored once. If upstream changes how rankings count, the stored awards keep the old results until they are rebuilt. To force it, mark everything dirty; the next sync (at most 30 seconds later) recomputes all periods:
 
 ```sql
 INSERT INTO awards_dirty (ts) VALUES (-1);

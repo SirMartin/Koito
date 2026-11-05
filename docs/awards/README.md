@@ -22,7 +22,7 @@ Thresholds must satisfy gold <= platinum <= diamond, otherwise the feature stays
 
 - Weeks are ISO weeks (Monday start), labelled `YYYY-Www` with the ISO year.
 - Closed periods are immutable, so they are computed once into the `awards` table, using upstream's own `GetTop*Paginated` queries.
-- A background job runs at startup and every 10 minutes. On the first start it backfills every closed year and week since the first listen, in the background; large histories take a while.
+- A background job runs at startup and every 30 seconds (an idle run is a few small reads). On the first start it backfills every closed year and week since the first listen, in the background; large histories take a while.
 - SQLite triggers on `listens`, `artist_tracks` and `tracks.release_id` mark changed periods dirty, so late listens, merges and deletions are picked up by the next run without touching upstream code.
 - The tables and triggers are created at startup (`CREATE ... IF NOT EXISTS`), not through a goose migration, to avoid colliding with upstream's migration numbers.
 
