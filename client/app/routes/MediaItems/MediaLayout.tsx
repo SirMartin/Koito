@@ -13,6 +13,7 @@ import MbzIcon from "~/components/icons/MbzIcon";
 import { timeListenedString } from "~/utils/utils";
 import { Link } from "react-router";
 import useWindowWidth from "~/hooks/useWindowWidth";
+import Awards from "~/components/Awards";
 
 export type MergeFunc = (
   from: number,
@@ -116,6 +117,7 @@ export default function MediaLayout(props: Props) {
                 </span>
               </h5>
             </div>
+            <Awards type={props.type} id={props.id} />
             <div className="flex flex-col gap-1.5 items-start">
               {props.subContent}
               {props.listenCount > 0 && (
