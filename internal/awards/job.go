@@ -9,7 +9,9 @@ import (
 	"github.com/gabehf/koito/internal/logger"
 )
 
-const syncInterval = 10 * time.Minute
+// An idle sync is a handful of small reads, so a short interval is cheap and
+// makes merges and deletes show up quickly.
+const syncInterval = 30 * time.Second
 
 // Start runs Sync once immediately and then every syncInterval until ctx is
 // done. Errors are logged, never fatal. Stores without a SQL() handle (a

@@ -41,6 +41,9 @@ func (s *Syncer) Sync(ctx context.Context) error {
 	if err := s.computeMissing(ctx); err != nil {
 		return err
 	}
+	if maxDirty == 0 {
+		return nil // nothing was dirty: skip a write that would only take the lock
+	}
 	// Rows added while computing have a higher rowid and wait for the next run.
 	if _, err := s.sqlDB.ExecContext(ctx, `DELETE FROM awards_dirty WHERE rowid <= ?`, maxDirty); err != nil {
 		return fmt.Errorf("awards: clear dirty: %w", err)
